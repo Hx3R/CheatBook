@@ -74,9 +74,9 @@ Because real learning comes from doing. This project is my attempt to document i
 <details>
 <summary>📖 Theory & Notes</summary>
 
-- Cyber Law/
-- Ethics/
-- Hacker Culture/
+- Cyber Law
+- Ethics
+- Hacker Culture
 
 </details>
 
