@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CheatBook 🧠💻</title>
+  <title>HTB - CAP Lab Walkthrough</title>
   <style>
     body {
       background-color: #0c0c0c;
@@ -12,7 +12,7 @@
     }
 
     h1, h2 {
-      color: #009e66; /* deep greenish-blue */
+      color: #009e66;
       text-shadow: 0 0 8px #004d33;
     }
 
@@ -26,33 +26,18 @@
       text-shadow: 0 0 6px #00ccff;
     }
 
-    details {
-      background-color: #1a1a1a;
-      border: 1px solid #333;
+    code, pre, blockquote {
+      background-color: #111;
       padding: 10px;
-      margin-bottom: 12px;
       border-radius: 6px;
-    }
-
-    summary {
-      font-weight: bold;
-      color: #00ccaa;
-      cursor: pointer;
-      text-shadow: 0 0 4px #007766;
+      display: block;
+      color: #ccc;
+      overflow-x: auto;
     }
 
     ul {
       list-style: square;
       padding-left: 20px;
-    }
-
-    code, blockquote {
-      background-color: #111;
-      padding: 5px 10px;
-      border-radius: 4px;
-      display: inline-block;
-      font-style: italic;
-      color: #ccc;
     }
 
     em {
@@ -65,124 +50,81 @@
       background-color: #333;
       margin: 20px 0;
     }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .flag {
+      background-color: #222;
+      border: 1px dashed #009e66;
+      padding: 10px;
+      margin-top: 10px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
-  <h1>CheatBook 🧠💻</h1>
-  <p>Welcome to <strong>CheatBook</strong>, the ultimate repository of personal cheatsheets collected and created by <strong>Hx3R</strong> while mastering the art of hacking and cybersecurity.</p>
+  <h1>HTB Lab: CAP 🛡️</h1>
+  <p>A full walkthrough covering <strong>Enumeration</strong>, <strong>Foothold</strong>, and <strong>Privilege Escalation</strong>.</p>
 
-  <h2>🕵️ About This Project</h2>
-  <p>As I learn, break, and build my way through the hacker mindset, this repo serves as my personal knowledge vault. Each cheatsheet is crafted from hands-on experience, tutorials, challenges, and tools I encounter along the way.</p>
-  <p>Whether you're a beginner, intermediate learner, or just curious—feel free to browse, use, and get inspired by the resources here.</p>
-
-  <h2>💡 Why CheatBook?</h2>
-  <p>Because real learning comes from doing. This project is my attempt to document insights, commands, and workflows that I never want to forget—and that others might benefit from too.</p>
-  <blockquote>“If you want something done right, do it yourself.” - Kevin Mitnicky</blockquote>
-
-  <h2>📁 Folder Structure</h2>
-
-  <details>
-    <summary>📚 Protocols</summary>
+  <div class="section">
+    <h2>1️⃣ Enumeration</h2>
     <ul>
-      <li>HTTP</li>
-      <li>TCP-IP</li>
-      <li>DNS</li>
-      <li>SMTP</li>
-      <li>SSH</li>
-      <li>VPN</li>
-      <li>Wi-Fi</li>
-    </ul>
-  </details>
-
-  <details>
-    <summary>🛠️ Tools</summary>
-    <ul>
-      <li>Reconnaissance
+      <li>Run <code>nmap -sC -sV -oA cap_scan 10.10.10.245</code></li>
+      <li>Discovered open ports:
         <ul>
-          <li>Nmap</li>
-          <li>Shodan</li>
-          <li>Amass</li>
+          <li>TCP/80 – Apache server hosting a web interface</li>
+          <li>TCP/21 – FTP with anonymous login enabled</li>
         </ul>
       </li>
-      <li>Exploitation
+      <li>Web interface at <code>http://10.10.10.245/</code> is a packet capture portal</li>
+      <li>FTP allows downloading <code>.pcap</code> files — these contain credentials!</li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>2️⃣ Foothold</h2>
+    <ul>
+      <li>Analyze the downloaded <code>.pcap</code> using Wireshark or <code>tcpdump</code></li>
+      <li>Extract HTTP Basic Auth from stream:
+        <pre>GET /login.php HTTP/1.1
+Authorization: Basic YWRtaW46Y2FwY2FwY2Fw</pre>
+      </li>
+      <li>Decode base64:
+        <pre>echo YWRtaW46Y2FwY2FwY2Fw | base64 -d</pre>
         <ul>
-          <li>Metasploit</li>
-          <li>SQLmap</li>
-          <li>BurpSuite</li>
+          <li><strong>Username:</strong> admin</li>
+          <li><strong>Password:</strong> capcapcap</li>
         </ul>
       </li>
-      <li>Privilege Escalation
-        <ul>
-          <li>Linux</li>
-          <li>Windows</li>
-        </ul>
+      <li>Login via web portal and upload a reverse shell payload</li>
+      <li>Catch shell with <code>nc -lvnp 4444</code></li>
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>3️⃣ Privilege Escalation</h2>
+    <ul>
+      <li>Check sudo rights: <code>sudo -l</code></li>
+      <li>Allowed to run <code>/usr/bin/capctl</code> with sudo</li>
+      <li>Analyze binary with <code>strings</code>, <code>ltrace</code>, <code>gdb</code></li>
+      <li>Find command injection vulnerability</li>
+      <li>Exploit using:
+        <pre>sudo /usr/bin/capctl "&& /bin/bash"</pre>
       </li>
-      <li>Post-Exploitation
-        <ul>
-          <li>Empire</li>
-          <li>Mimikatz</li>
-        </ul>
-      </li>
-      <li>Payloads
-        <ul>
-          <li>Netcat</li>
-          <li>Python</li>
-          <li>PowerShell</li>
-        </ul>
-      </li>
+      <li>You’re root 🧨</li>
     </ul>
-  </details>
+    <div class="flag">
+      Root Flag: <code>cat /root/root.txt</code>
+    </div>
+  </div>
 
-  <details>
-    <summary>🎯 Methodologies</summary>
-    <ul>
-      <li>OSINT</li>
-      <li>Threat Modeling</li>
-      <li>Attack Vectors</li>
-      <li>Reporting</li>
-    </ul>
-  </details>
+  <hr>
 
-  <details>
-    <summary>🧪 Labs & Challenges</summary>
-    <ul>
-      <li>HackTheBox</li>
-      <li>TryHackMe</li>
-      <li>VulnHub</li>
-    </ul>
-  </details>
-
-  <details>
-    <summary>📖 Theory & Notes</summary>
-    <ul>
-      <li>Cyber Law</li>
-      <li>Ethics</li>
-      <li>Hacker Culture</li>
-    </ul>
-  </details>
-
-  <details>
-    <summary>🧷 References</summary>
-    <ul>
-      <li>Books</li>
-      <li>Videos</li>
-      <li>Articles</li>
-    </ul>
-  </details>
-
-  <p>🔒 <em>Note: Some folders are just blueprints for now. Each one will evolve as I continue my journey.</em></p>
-
-  <h2>📬 Contact</h2>
-  <ul>
-    <li>🐙 GitHub: <a href="https://github.com/Hx3R" target="_blank">Hx3R</a></li>
-    <li>📧 Email: <a href="mailto:4865784861636b6572@gmail.com">4865784861636b6572@gmail.com</a></li>
-    <li>💬 Discord Profile: <a href="https://discord.com/users/526909268411023381" target="_blank">User Profile</a></li>
-    <li>🏠 Discord Server: <a href="https://discord.gg/whe72edd" target="_blank">Join my Community</a></li>
-  </ul>
-
-  <h2>📜 License</h2>
-  <p>This project is open-source. Use it, fork it, share it—but give credit where it's due.</p>
+  <p><strong>HTB Profile:</strong> <a href="https://app.hackthebox.com/users/526909268411023381" target="_blank">Hx3R</a></p>
+  <p><strong>Discord:</strong> <a href="https://discord.gg/whe72edd" target="_blank">Join my server</a></p>
 
 </body>
 </html>
